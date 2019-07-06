@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Product;
 use Illuminate\Http\Request;
-use Gloudemans\Shoppingcart\Facades\Cart;
-use Illuminate\Support\Facades\Validator;
+use App\Produk;
+use Cart;
+use Validator;
 
 class CartController extends Controller
 {
@@ -16,37 +16,65 @@ class CartController extends Controller
      */
     public function index()
     {
-        $mightAlsoLike = Product::mightAlsoLike()->get();
+        $mungkinJugaSuka = Produk::mungkinJugaSuka()->get();
+        return view('cart')->with('mungkinJugaSuka', $mungkinJugaSuka);
+    }
 
-        return view('cart')->with([
-            'mightAlsoLike' => $mightAlsoLike,
-            'discount' => getNumbers()->get('discount'),
-            'newSubtotal' => getNumbers()->get('newSubtotal'),
-            'newTax' => getNumbers()->get('newTax'),
-            'newTotal' => getNumbers()->get('newTotal'),
-        ]);
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Product  $product
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Product $product)
+    public function store(Request $request)
     {
-        $duplicates = Cart::search(function ($cartItem, $rowId) use ($product) {
-            return $cartItem->id === $product->id;
+        $duplikat = Cart::search(function($cartItem, $rowId) use ($request){
+            return $cartItem->id === $request->id;
         });
 
-        if ($duplicates->isNotEmpty()) {
-            return redirect()->route('cart.index')->with('success_message', 'Item is already in your cart!');
-        }
+        if($duplikat->isNotEmpty()){
+            return redirect()->route('cart.index')->with('success_message', 'Produk sudah ada dikeranjang!');
+        
+    }
 
-        Cart::add($product->id, $product->name, 1, $product->price)
-            ->associate('App\Product');
+        Cart::add($request->id, $request->nama, 1, $request->harga)
+        ->associate('App\Produk');
 
-        return redirect()->route('cart.index')->with('success_message', 'Item was added to your cart!');
+        return redirect()->route('cart.index')->with('success_message', 'Produk telah ditambahkan di keranjang!');
+    }
+
+     
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
     }
 
     /**
@@ -61,19 +89,16 @@ class CartController extends Controller
         $validator = Validator::make($request->all(), [
             'quantity' => 'required|numeric|between:1,5'
         ]);
-
-        if ($validator->fails()) {
-            session()->flash('errors', collect(['Quantity must be between 1 and 5.']));
+        
+        if ($validator->fails()){
+            session()->flash('errors', collect(['Produk yang ditambah harus antara 1-5!']) );
             return response()->json(['success' => false], 400);
         }
 
-        if ($request->quantity > $request->productQuantity) {
-            session()->flash('errors', collect(['We currently do not have enough items in stock.']));
-            return response()->json(['success' => false], 400);
-        }
 
         Cart::update($id, $request->quantity);
-        session()->flash('success_message', 'Quantity was updated successfully!');
+
+        session()->flash('success_message', 'Jumlah Produk berhasil bertambah!');
         return response()->json(['success' => true]);
     }
 
@@ -87,11 +112,11 @@ class CartController extends Controller
     {
         Cart::remove($id);
 
-        return back()->with('success_message', 'Item has been removed!');
+        return back()->with('success_message', 'Produk telah dihapus!');
     }
 
-    /**
-     * Switch item for shopping cart to Save for Later.
+     /**
+     * Simpan produk untuk nanti
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -102,17 +127,21 @@ class CartController extends Controller
 
         Cart::remove($id);
 
-        $duplicates = Cart::instance('saveForLater')->search(function ($cartItem, $rowId) use ($id) {
+        $duplikat = Cart::instance('saveForLater')->search(function ($cartItem, $rowId) use ($id){
             return $rowId === $id;
         });
 
-        if ($duplicates->isNotEmpty()) {
-            return redirect()->route('cart.index')->with('success_message', 'Item is already Saved For Later!');
+        if ($duplikat->isNotEmpty()){
+            return redirect()->route('cart.index')->with('success_message', 'Produk sudah ada pada list simpan untuk nanti!');
         }
 
-        Cart::instance('saveForLater')->add($item->id, $item->name, 1, $item->price)
-            ->associate('App\Product');
+        Cart::instance('saveForLater')->add($item->id, $item->nama, 1, $item->harga)
+        ->associate('App\Produk');
 
-        return redirect()->route('cart.index')->with('success_message', 'Item has been Saved For Later!');
+        return redirect()->route('cart.index')->with('success_message', 'Produk disimpan untuk nanti!');
     }
+
 }
+
+
+

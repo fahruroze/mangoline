@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Gloudemans\Shoppingcart\Facades\Cart;
+use Cart;
 
 class SaveForLaterController extends Controller
 {
+    
     /**
      * Remove the specified resource from storage.
      *
@@ -17,32 +18,33 @@ class SaveForLaterController extends Controller
     {
         Cart::instance('saveForLater')->remove($id);
 
-        return back()->with('success_message', 'Item has been removed!');
+        return back()->with('success_message', 'Produk telah dihapus!');
     }
 
     /**
-     * Switch item from Saved for Later  to Cart.
+     * Memindahkan list produk yang tersimpan ke dalam keranjang
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+
     public function switchToCart($id)
     {
         $item = Cart::instance('saveForLater')->get($id);
 
         Cart::instance('saveForLater')->remove($id);
 
-        $duplicates = Cart::instance('default')->search(function ($cartItem, $rowId) use ($id) {
+        $duplikat = Cart::instance('default')->search(function ($cartItem, $rowId) use ($id){
             return $rowId === $id;
         });
 
-        if ($duplicates->isNotEmpty()) {
-            return redirect()->route('cart.index')->with('success_message', 'Item is already in your Cart!');
+        if ($duplikat->isNotEmpty()){
+            return redirect()->route('cart.index')->with('success_message', 'Produk sudah ada diKeranjang!');
         }
 
-        Cart::instance('default')->add($item->id, $item->name, 1, $item->price)
-            ->associate('App\Product');
+        Cart::instance('default')->add($item->id, $item->nama, 1, $item->harga)
+        ->associate('App\Produk');
 
-        return redirect()->route('cart.index')->with('success_message', 'Item has been moved to Cart!');
+        return redirect()->route('cart.index')->with('success_message', 'Produk telah dimasukkan keKeranjang!');
     }
 }

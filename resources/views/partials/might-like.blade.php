@@ -1,15 +1,16 @@
 <div class="might-like-section">
     <div class="container">
-        <h2>You might also like...</h2>
+        <h2>Mungkin kamu juga suka...</h2>
         <div class="might-like-grid">
-            @foreach ($mightAlsoLike as $product)
-                <a href="{{ route('shop.show', $product->slug) }}" class="might-like-product">
-                    <img src="{{ productImage($product->image) }}" alt="product">
-                    <div class="might-like-product-name">{{ $product->name }}</div>
-                    <div class="might-like-product-price">{{ $product->presentPrice() }}</div>
-                </a>
-            @endforeach
-
+        @foreach ($mungkinJugaSuka as $produk)
+            <a href="{{route('belanja.show', $produk->slug)}}" class="might-like-product">
+                <img src="{{ asset('img/produk/'.$produk->slug.'.jpg') }}" alt="product">
+                <div class="might-like-product-name">{{$produk->nama}}</div>
+                <div class="might-like-product-price">{{formatRupiah($produk->harga)}}</div>
+            </a>
+        @endforeach
+            
+           
         </div>
     </div>
 </div>
